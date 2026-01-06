@@ -171,15 +171,16 @@ print_info() { echo -e "${DIM}   $1${RESET}" >&2; }
 validate_args() {
   [[ -z "$PROMPT" ]] && { print_error "No prompt provided"; echo "  Run: ralph --help" >&2; exit 1; }
   [[ "$CLI" != "claude" && "$CLI" != "codex" ]] && { print_error "--cli must be 'claude' or 'codex' (got: '$CLI')"; exit 1; }
-  ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -eq 0 ]] && { print_error "--max-iterations must be positive (got: '$MAX_ITERATIONS')"; exit 1; }
-  [[ -z "$PROMISE" ]] && { print_error "--promise cannot be empty"; exit 1; }
-  [[ -n "$PRD_FILE" && ! -f "$PRD_FILE" ]] && { print_error "PRD file not found: $PRD_FILE"; exit 1; }
+  # Note: || true prevents set -e from exiting on the false return value
+  { ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -eq 0 ]]; } && { print_error "--max-iterations must be positive (got: '$MAX_ITERATIONS')"; exit 1; } || true
+  [[ -z "$PROMISE" ]] && { print_error "--promise cannot be empty"; exit 1; } || true
+  [[ -n "$PRD_FILE" && ! -f "$PRD_FILE" ]] && { print_error "PRD file not found: $PRD_FILE"; exit 1; } || true
 }
 
 check_dependencies() {
-  ! command -v "$CLI" &>/dev/null && { print_error "$CLI is required but not installed"; exit 1; }
+  ! command -v "$CLI" &>/dev/null && { print_error "$CLI is required but not installed"; exit 1; } || true
   # Claude streams JSON that requires jq for parsing
-  [[ "$CLI" == "claude" ]] && ! command -v jq &>/dev/null && { print_error "jq required for Claude (brew install jq)"; exit 1; }
+  [[ "$CLI" == "claude" ]] && ! command -v jq &>/dev/null && { print_error "jq required for Claude (brew install jq)"; exit 1; } || true
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
