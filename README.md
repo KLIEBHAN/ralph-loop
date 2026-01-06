@@ -135,6 +135,16 @@ Phase 5: Integration tests
 Output <promise>COMPLETE</promise> when all phases done.
 ```
 
+### PRD-Based Workflow
+
+For ongoing projects, use a PRD file that Ralph reads each iteration:
+
+```bash
+ralph "Read plans/prd.md and work on the next open feature."
+```
+
+See [`examples/prd-template.md`](examples/prd-template.md) for a template optimized for Ralph loops.
+
 ## Philosophy
 
 > "Ralph is deterministically bad in an undeterministic world."
