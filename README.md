@@ -22,11 +22,11 @@ Ralph is a simple bash loop that repeatedly runs an AI coding agent with the sam
 
 ```bash
 # Download
-curl -o ~/.local/bin/ralph https://raw.githubusercontent.com/YOUR_USERNAME/ralph-loop/main/ralph
+curl -o ~/.local/bin/ralph https://raw.githubusercontent.com/KLIEBHAN/ralph-loop/master/ralph
 chmod +x ~/.local/bin/ralph
 
 # Or clone and symlink
-git clone https://github.com/YOUR_USERNAME/ralph-loop.git
+git clone https://github.com/KLIEBHAN/ralph-loop.git
 ln -s $(pwd)/ralph-loop/ralph ~/.local/bin/ralph
 ```
 
