@@ -164,7 +164,7 @@ print_error() {
 }
 
 print_warning() {
-  echo -e "${COLOR_RED}⚠️  $1${COLOR_RESET}"
+  echo -e "${COLOR_YELLOW}⚠️  $1${COLOR_RESET}"
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -183,8 +183,13 @@ validate_cli_args() {
     exit 1
   fi
 
-  if ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]]; then
-    print_error "--max-iterations must be a number (got: '$MAX_ITERATIONS')"
+  if ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -eq 0 ]]; then
+    print_error "--max-iterations must be a positive number (got: '$MAX_ITERATIONS')"
+    exit 1
+  fi
+
+  if [[ -z "$PROMISE" ]]; then
+    print_error "--promise cannot be empty"
     exit 1
   fi
 
@@ -417,7 +422,7 @@ done
 
 # Warn about extra positional arguments (common mistake)
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
-  echo -e "${COLOR_YELLOW}⚠️  Warning: Extra arguments ignored: ${EXTRA_ARGS[*]}${COLOR_RESET}" >&2
+  print_warning "Extra arguments ignored: ${EXTRA_ARGS[*]}"
   echo -e "${COLOR_DIM}   Did you mean to use flags?${COLOR_RESET}" >&2
 
   # Detect common patterns and suggest correct syntax
