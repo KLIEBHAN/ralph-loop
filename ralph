@@ -88,16 +88,28 @@ Usage: ralph [OPTIONS] "Your prompt"
 
 Options:
   --cli <claude|codex>    AI CLI to use (default: claude)
-  --max-iterations, -n    Max iterations (default: 10)
-  --promise, -p           Completion signal (default: COMPLETE)
+  -n, --max-iterations N  Max iterations (default: 10)
+  -p, --promise TEXT      Completion signal (default: COMPLETE)
   --prd <file>            PRD file to validate (rejects if "## Offen" not empty)
-  --help, -h              Show this help
+  -h, --help              Show this help
 
 Examples:
+  # Basic usage
   ralph "Build a REST API for todos"
-  ralph --cli codex "Fix the auth bug"
-  ralph -n 20 -p DONE "Implement feature X"
-  ralph --prd plans/prd.md "Work on the next feature from PRD"
+
+  # With iteration limit
+  ralph -n 20 "Implement feature X"
+
+  # PRD-based workflow (recommended for projects)
+  ralph --prd plans/prd.md "Read plans/prd.md and work on the next feature"
+
+  # Custom completion signal
+  ralph -p "ALL TESTS PASS" "Fix the failing tests"
+
+  # Combined options
+  ralph -n 50 --prd plans/prd.md "Complete all features in the PRD"
+
+Note: Options must come BEFORE the prompt. Wrong: ralph "prompt" 10
 EOF
 }
 
@@ -381,6 +393,9 @@ PROMISE="$DEFAULT_PROMISE"
 PRD_FILE=""
 PROMPT=""
 
+# Track extra positional args for warning
+EXTRA_ARGS=()
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cli)               CLI="$2"; shift 2 ;;
@@ -389,9 +404,35 @@ while [[ $# -gt 0 ]]; do
     --prd)               PRD_FILE="$2"; shift 2 ;;
     --help|-h)           print_help; exit 0 ;;
     -*)                  print_error "Unknown option: $1"; exit 1 ;;
-    *)                   PROMPT="$1"; shift ;;
+    *)
+      if [[ -z "$PROMPT" ]]; then
+        PROMPT="$1"
+      else
+        EXTRA_ARGS+=("$1")
+      fi
+      shift
+      ;;
   esac
 done
+
+# Warn about extra positional arguments (common mistake)
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+  echo -e "${COLOR_YELLOW}⚠️  Warning: Extra arguments ignored: ${EXTRA_ARGS[*]}${COLOR_RESET}" >&2
+  echo -e "${COLOR_DIM}   Did you mean to use flags?${COLOR_RESET}" >&2
+
+  # Detect common patterns and suggest correct syntax
+  for arg in "${EXTRA_ARGS[@]}"; do
+    if [[ "$arg" =~ ^[0-9]+$ ]]; then
+      echo -e "${COLOR_DIM}   • For iterations: -n $arg${COLOR_RESET}" >&2
+    elif [[ "$arg" =~ ^(COMPLETE|DONE|FINISHED|READY)$ ]]; then
+      echo -e "${COLOR_DIM}   • For promise: -p $arg${COLOR_RESET}" >&2
+    elif [[ -f "$arg" ]] || [[ "$arg" =~ \.(md|txt)$ ]]; then
+      echo -e "${COLOR_DIM}   • For PRD validation: --prd $arg${COLOR_RESET}" >&2
+    fi
+  done
+
+  echo "" >&2
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
