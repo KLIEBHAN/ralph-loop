@@ -63,6 +63,9 @@ ralph --cli codex "Fix the authentication bug"
 # Custom iteration limit and promise
 ralph -n 20 -p "ALL TESTS PASSING" "Implement user registration with tests"
 
+# PRD-based workflow with validation (recommended)
+ralph --prd plans/prd.md "Read plans/prd.md and work on the next open feature."
+
 # Complex multi-phase task
 ralph -n 50 "
 Phase 1: Set up database schema
