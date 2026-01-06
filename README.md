@@ -43,12 +43,13 @@ ralph [OPTIONS] "Your prompt here"
 
 ### Options
 
-| Option                  | Short | Description                    | Default    |
-| ----------------------- | ----- | ------------------------------ | ---------- |
-| `--cli <claude\|codex>` |       | AI CLI to use                  | `claude`   |
-| `--max-iterations`      | `-n`  | Max iterations before stopping | `10`       |
-| `--promise`             | `-p`  | Completion promise text        | `COMPLETE` |
-| `--help`                | `-h`  | Show help                      |            |
+| Option                  | Short | Description                                             | Default    |
+| ----------------------- | ----- | ------------------------------------------------------- | ---------- |
+| `--cli <claude\|codex>` |       | AI CLI to use                                           | `claude`   |
+| `--max-iterations`      | `-n`  | Max iterations before stopping                          | `10`       |
+| `--promise`             | `-p`  | Completion promise text                                 | `COMPLETE` |
+| `--prd <file>`          |       | PRD file to validate (rejects completion if items open) |            |
+| `--help`                | `-h`  | Show help                                               |            |
 
 ### Examples
 
@@ -137,11 +138,20 @@ Output <promise>COMPLETE</promise> when all phases done.
 
 ### PRD-Based Workflow
 
-For ongoing projects, use a PRD file that Ralph reads each iteration:
+For ongoing projects, use a PRD file with `--prd` validation:
 
 ```bash
-ralph "Read plans/prd.md and work on the next open feature."
+ralph --prd plans/prd.md "Read plans/prd.md and work on the next open feature."
 ```
+
+**How `--prd` works:**
+
+- When the AI outputs the completion signal, Ralph parses the PRD file
+- Counts items in the `## Offen` section (lines starting with `- `)
+- If items remain → **rejects completion** and continues iterating
+- Only accepts completion when `## Offen` is empty
+
+This prevents premature completion signals—the script validates against ground truth.
 
 See [`examples/prd-template.md`](examples/prd-template.md) for a template optimized for Ralph loops.
 

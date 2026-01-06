@@ -29,6 +29,7 @@ readonly LINE="━━━━━━━━━━━━━━━━━━━━━�
 DEFAULT_CLI="claude"
 DEFAULT_MAX_ITERATIONS=10
 DEFAULT_PROMISE="COMPLETE"
+DEFAULT_PRD=""
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # UTILITY FUNCTIONS
@@ -75,12 +76,14 @@ Options:
   --cli <claude|codex>    AI CLI to use (default: claude)
   --max-iterations, -n    Max iterations (default: 10)
   --promise, -p           Completion signal (default: COMPLETE)
+  --prd <file>            PRD file to validate (rejects completion if "Offen" not empty)
   --help, -h              Show this help
 
 Examples:
   ralph "Build a REST API for todos"
   ralph --cli codex "Fix the auth bug"
   ralph -n 20 -p DONE "Implement feature X"
+  ralph --prd plans/prd.md "Work on the next feature from PRD"
 EOF
 }
 
@@ -90,6 +93,9 @@ show_header() {
   echo -e "  CLI:      ${COLOR_YELLOW}$CLI${COLOR_RESET}"
   echo -e "  Max:      ${COLOR_YELLOW}$MAX_ITERATIONS${COLOR_RESET} iterations"
   echo -e "  Promise:  ${COLOR_YELLOW}$PROMISE${COLOR_RESET}"
+  if [[ -n "$PRD_FILE" ]]; then
+    echo -e "  PRD:      ${COLOR_YELLOW}$PRD_FILE${COLOR_RESET} (validates completion)"
+  fi
   echo -e "${COLOR_BLUE}───────────────────────────────────────────────${COLOR_RESET}"
 }
 
@@ -153,6 +159,43 @@ validate_inputs() {
     show_error "--max-iterations must be a number (got: '$MAX_ITERATIONS')"
     exit 1
   fi
+
+  if [[ -n "$PRD_FILE" && ! -f "$PRD_FILE" ]]; then
+    show_error "PRD file not found: $PRD_FILE"
+    exit 1
+  fi
+}
+
+# Count open items in PRD's "## Offen" section
+# Returns the count (0 if section empty or not found)
+count_prd_open_items() {
+  local prd_file=$1
+
+  if [[ ! -f "$prd_file" ]]; then
+    echo "0"
+    return
+  fi
+
+  # Extract lines between "## Offen" and next "##", count list items (lines starting with "- ")
+  sed -n '/^## Offen/,/^## /p' "$prd_file" | grep -c "^- " 2>/dev/null || echo "0"
+}
+
+# Validate PRD completion (returns 0 if valid, 1 if rejected)
+validate_prd_completion() {
+  if [[ -z "$PRD_FILE" ]]; then
+    return 0  # No PRD validation requested
+  fi
+
+  local open_count
+  open_count=$(count_prd_open_items "$PRD_FILE")
+
+  if [[ "$open_count" -gt 0 ]]; then
+    echo -e "${COLOR_RED}⚠️  Completion rejected: PRD has $open_count open item(s)${COLOR_RESET}"
+    echo -e "${COLOR_DIM}   File: $PRD_FILE${COLOR_RESET}"
+    return 1
+  fi
+
+  return 0
 }
 
 check_dependencies() {
@@ -241,6 +284,7 @@ run_codex() {
 CLI="$DEFAULT_CLI"
 MAX_ITERATIONS="$DEFAULT_MAX_ITERATIONS"
 PROMISE="$DEFAULT_PROMISE"
+PRD_FILE="$DEFAULT_PRD"
 PROMPT=""
 
 while [[ $# -gt 0 ]]; do
@@ -248,6 +292,7 @@ while [[ $# -gt 0 ]]; do
     --cli)            CLI="$2"; shift 2 ;;
     --max-iterations|-n) MAX_ITERATIONS="$2"; shift 2 ;;
     --promise|-p)     PROMISE="$2"; shift 2 ;;
+    --prd)            PRD_FILE="$2"; shift 2 ;;
     --help|-h)        show_help; exit 0 ;;
     -*)               show_error "Unknown option: $1"; exit 1 ;;
     *)                PROMPT="$1"; shift ;;
@@ -292,9 +337,13 @@ for iteration in $(seq 1 "$MAX_ITERATIONS"); do
   if [[ "$cli_exit_code" -eq 0 ]]; then
     # Success - check if task is complete
     if grep -qF "<promise>$PROMISE</promise>" "$OUTPUT_FILE"; then
-      total_duration=$((iter_end_time - total_start_time))
-      show_success "$iteration" "$total_duration"
-      exit 0
+      # Validate against PRD if specified
+      if validate_prd_completion; then
+        total_duration=$((iter_end_time - total_start_time))
+        show_success "$iteration" "$total_duration"
+        exit 0
+      fi
+      # PRD validation failed - continue to next iteration
     fi
   else
     echo -e "${COLOR_RED}⚠️  $CLI exited with error (code: $cli_exit_code), continuing...${COLOR_RESET}"
