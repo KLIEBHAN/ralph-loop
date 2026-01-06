@@ -1,5 +1,15 @@
 # PRD - [Projektname]
 
+<!--
+  RALPH LOOP PRD TEMPLATE
+
+  Dieses Template ist optimiert für die Verwendung mit:
+  ralph --prd plans/prd.md "Read plans/prd.md and work on the next open feature."
+
+  WICHTIG: Die Sektion "## Offen" wird vom --prd Flag geparst.
+  Nur Zeilen die mit "- " beginnen werden gezählt.
+-->
+
 ## Workflow
 
 1. **Status:** `git diff` prüfen → bei Änderungen: testen → committen
@@ -17,16 +27,26 @@
 
 ## Offen
 
-<!-- Höchste Priorität oben. Wenn leer → Task ist abgeschlossen. -->
+<!--
+  FEATURE BACKLOG
+  - Höchste Priorität oben
+  - Format: "- Kurzbeschreibung _(Details/Metriken)_"
+  - Wenn leer UND --prd gesetzt → Ralph akzeptiert Completion-Signal
+-->
 
-- Feature 1
+- Feature 1 _(Beschreibung oder Metrik)_
 - Feature 2
 
 ---
 
 ## Routine-Checks
 
-<!-- Bei JEDER Iteration prüfen, blockiert aber NICHT den Abschluss -->
+<!--
+  NICHT-BLOCKIERENDE CHECKS
+  - Werden bei jeder Iteration geprüft
+  - Blockieren NICHT das Completion-Signal
+  - Für kontinuierliche Verbesserung
+-->
 
 - [ ] Gibt es offensichtliche Verbesserungen für diese PRD?
 - [ ] Fehlt ein wichtiges Feature in der "Offen"-Liste?
@@ -35,7 +55,12 @@
 
 ## Abschluss-Prüfung
 
-<!-- NUR ausführen wenn "Offen" leer ist! -->
+<!--
+  PRE-COMPLETION CHECKLIST
+  - Nur ausführen wenn "Offen" leer ist
+  - Verhindert voreilige Completion-Signale
+  - Zwingt zur expliziten Verifikation
+-->
 
 Bevor du das Completion-Signal ausgibst, beantworte EXPLIZIT:
 
@@ -49,10 +74,23 @@ Nur wenn ALLE drei Punkte positiv beantwortet → Completion-Signal.
 
 ## Erledigt
 
+<!--
+  ABGESCHLOSSENE FEATURES
+  - Format: "- ✅ Beschreibung — YYYY-MM-DD"
+  - Neueste zuerst (optional)
+-->
+
 - ✅ Beispiel-Feature — 2026-01-01
 
 ---
 
 ## Notizen
 
-Kontext für zukünftige Iterationen hier dokumentieren.
+<!--
+  KONTEXT FÜR ZUKÜNFTIGE ITERATIONEN
+  - Aktueller Status (z.B. "Lint: 638 Fehler")
+  - Bekannte Probleme
+  - Technische Schulden
+-->
+
+Hier Kontext dokumentieren, der für zukünftige Iterationen relevant ist.
