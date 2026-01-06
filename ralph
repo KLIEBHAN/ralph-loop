@@ -249,19 +249,19 @@ validate_prd_allows_completion() {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Wraps user prompt with iteration context and instructions
+# Note: Iteration number intentionally omitted to avoid rushing/anxiety behavior
 build_iteration_prompt() {
-  local iteration=$1
   cat <<EOF
 $PROMPT
 
 ---
-🔄 Ralph iteration $iteration/$MAX_ITERATIONS
+🔄 Ralph Loop (fresh context)
 
 INSTRUCTIONS:
 - Check files and git history for previous work
-- Continue from where the last iteration left off
+- Continue from where you left off
 - When GENUINELY complete, output: <promise>$PROMISE</promise>
-- Do NOT output the promise unless the statement is TRUE
+- Do NOT output the promise unless truly done
 EOF
 }
 
@@ -356,7 +356,7 @@ run_iteration() {
 
   # Build and execute prompt
   local full_prompt
-  full_prompt=$(build_iteration_prompt "$iteration")
+  full_prompt=$(build_iteration_prompt)
   execute_cli "$full_prompt"
 
   # Show duration
