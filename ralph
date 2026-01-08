@@ -169,18 +169,44 @@ print_info() { echo -e "${DIM}   $1${RESET}" >&2; }
 # ═══════════════════════════════════════════════════════════════════════════════
 
 validate_args() {
-  [[ -z "$PROMPT" ]] && { print_error "No prompt provided"; echo "  Run: ralph --help" >&2; exit 1; }
-  [[ "$CLI" != "claude" && "$CLI" != "codex" ]] && { print_error "--cli must be 'claude' or 'codex' (got: '$CLI')"; exit 1; }
-  # Note: || true prevents set -e from exiting on the false return value
-  { ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -eq 0 ]]; } && { print_error "--max-iterations must be positive (got: '$MAX_ITERATIONS')"; exit 1; } || true
-  [[ -z "$PROMISE" ]] && { print_error "--promise cannot be empty"; exit 1; } || true
-  [[ -n "$PRD_FILE" && ! -f "$PRD_FILE" ]] && { print_error "PRD file not found: $PRD_FILE"; exit 1; } || true
+  if [[ -z "$PROMPT" ]]; then
+    print_error "No prompt provided"
+    echo "  Run: ralph --help" >&2
+    exit 1
+  fi
+
+  if [[ "$CLI" != "claude" && "$CLI" != "codex" ]]; then
+    print_error "--cli must be 'claude' or 'codex' (got: '$CLI')"
+    exit 1
+  fi
+
+  if ! [[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -eq 0 ]]; then
+    print_error "--max-iterations must be positive (got: '$MAX_ITERATIONS')"
+    exit 1
+  fi
+
+  if [[ -z "$PROMISE" ]]; then
+    print_error "--promise cannot be empty"
+    exit 1
+  fi
+
+  if [[ -n "$PRD_FILE" && ! -f "$PRD_FILE" ]]; then
+    print_error "PRD file not found: $PRD_FILE"
+    exit 1
+  fi
 }
 
 check_dependencies() {
-  ! command -v "$CLI" &>/dev/null && { print_error "$CLI is required but not installed"; exit 1; } || true
+  if ! command -v "$CLI" &>/dev/null; then
+    print_error "$CLI is required but not installed"
+    exit 1
+  fi
+
   # Claude streams JSON that requires jq for parsing
-  [[ "$CLI" == "claude" ]] && ! command -v jq &>/dev/null && { print_error "jq required for Claude (brew install jq)"; exit 1; } || true
+  if [[ "$CLI" == "claude" ]] && ! command -v jq &>/dev/null; then
+    print_error "jq required for Claude (brew install jq)"
+    exit 1
+  fi
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -192,7 +218,8 @@ count_open_items() {
   local file=$1
   [[ ! -f "$file" ]] && { echo "0"; return; }
   # Count list items (lines starting with "- ") between "## Offen" and next heading
-  sed -n '/^## Offen/,/^## /p' "$file" | grep -c "^- " 2>/dev/null || echo "0"
+  # Note: grep -c outputs "0" on no match but exits 1; || true prevents exit without adding output
+  sed -n '/^## Offen/,/^## /p' "$file" | grep -c "^- " 2>/dev/null || true
 }
 
 prd_allows_completion() {
@@ -281,7 +308,11 @@ execute_codex() {
 
 execute_cli() {
   local prompt=$1
-  [[ "$CLI" == "claude" ]] && execute_claude "$prompt" || execute_codex "$prompt"
+  if [[ "$CLI" == "claude" ]]; then
+    execute_claude "$prompt"
+  else
+    execute_codex "$prompt"
+  fi
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -303,7 +334,7 @@ cli_succeeded() {
 # Returns 0 if task completed, 1 to continue iterating
 run_iteration() {
   local iteration=$1
-  local start_time end_time
+  local start_time end_time result=1
 
   start_time=$(date +%s)
   print_iteration_start "$iteration" "$(date +%H:%M:%S)"
@@ -314,21 +345,15 @@ run_iteration() {
   end_time=$(date +%s)
   print_iteration_end "$((end_time - start_time))"
 
-  # Handle CLI errors gracefully
+  # Determine result
   if ! cli_succeeded; then
     print_warning "$CLI exited with error, continuing..."
-    cleanup_temp_files
-    return 1
-  fi
-
-  # Check completion: promise present AND PRD allows it
-  if output_has_promise && prd_allows_completion; then
-    cleanup_temp_files
-    return 0
+  elif output_has_promise && prd_allows_completion; then
+    result=0
   fi
 
   cleanup_temp_files
-  return 1
+  return $result
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -350,7 +375,15 @@ while [[ $# -gt 0 ]]; do
     --prd)               PRD_FILE="$2"; shift 2 ;;
     --help|-h)           print_help; exit 0 ;;
     -*)                  print_error "Unknown option: $1"; exit 1 ;;
-    *)                   [[ -z "$PROMPT" ]] && PROMPT="$1" || EXTRA_ARGS+=("$1"); shift ;;
+    *)
+      # First positional arg = prompt, rest = extra args (likely user error)
+      if [[ -z "$PROMPT" ]]; then
+        PROMPT="$1"
+      else
+        EXTRA_ARGS+=("$1")
+      fi
+      shift
+      ;;
   esac
 done
 
@@ -362,9 +395,14 @@ warn_extra_args() {
   print_info "Did you mean to use flags?"
 
   for arg in "${EXTRA_ARGS[@]}"; do
-    [[ "$arg" =~ ^[0-9]+$ ]] && print_info "• For iterations: -n $arg"
-    [[ "$arg" =~ ^(COMPLETE|DONE|FINISHED|READY)$ ]] && print_info "• For promise: -p $arg"
-    { [[ -f "$arg" ]] || [[ "$arg" =~ \.(md|txt)$ ]]; } && print_info "• For PRD: --prd $arg"
+    # Suggest appropriate flag based on argument pattern
+    if [[ "$arg" =~ ^[0-9]+$ ]]; then
+      print_info "• For iterations: -n $arg"
+    elif [[ "$arg" =~ ^(COMPLETE|DONE|FINISHED|READY)$ ]]; then
+      print_info "• For promise: -p $arg"
+    elif [[ -f "$arg" ]] || [[ "$arg" =~ \.(md|txt)$ ]]; then
+      print_info "• For PRD: --prd $arg"
+    fi
   done
   echo "" >&2
 }
@@ -379,7 +417,8 @@ main() {
   check_dependencies
   print_header
 
-  local start_time=$(($(date +%s)))
+  local start_time
+  start_time=$(date +%s)
 
   for i in $(seq 1 "$MAX_ITERATIONS"); do
     if run_iteration "$i"; then
