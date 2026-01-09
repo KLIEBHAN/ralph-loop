@@ -247,35 +247,15 @@ build_prompt() {
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   template_file="${script_dir}/prompt.md"
 
-  if [[ -f "$template_file" ]]; then
-    template=$(<"$template_file")
-    template=${template//\$PROMPT/$PROMPT}
-    template=${template//\$PROMISE/$PROMISE}
-    printf "\n\n%s\n" "$template"
-    return
+  if [[ ! -f "$template_file" ]]; then
+    print_error "prompt.md not found: $template_file"
+    return 1
   fi
 
-  cat <<EOF
-
-
----
-🔄 Ralph Loop (fresh context)
-Du bist wie die Hauptrolle im Film Memento.
-Du hast eine Aufgabe, die im folgenden erklärt wird aber du weiß nicht wie weit du schon bist mit dem lösen.
-Es kann sein dass sie gerade beginnt, mitten drin ist oder schon fast abgeschlossen ist.
-Du hast nur die Notizen deines Vorgänger in notes.txt und Zugriff auf das git repo des aktuellen Projekts (wie der Vorgänger auch).
-Wenn notes.txt noch nicht existiert bist du der Ersteller der Datei und musst die Datei anlegen.
-Versuche selbst eine Strategie zum Umgang mit der Aufgabe zu entwickeln.
-Stelle keine Rückfragen, da sie nicht beantwortet werden können.
-Arbeite so lange oder kurz du möchtest.
-Ein kleiner Tipp: Arbeite nicht zu viel aber versuche möglichst einen konstruktiven kleinen Beitrag zu leisten. 
-Viel Erfolg.
-
-Die Aufgabe: $PROMPT
-
-- Wenn du die Aufgabe komplett erledigt hast, output: <promise>$PROMISE</promise>
-- Gib die Promise nicht aus, es sei denn du hast die Aufgabe erledigt.
-EOF
+  template=$(<"$template_file")
+  template=${template//\$PROMPT/$PROMPT}
+  template=${template//\$PROMISE/$PROMISE}
+  printf "\n\n%s\n" "$template"
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -356,12 +336,14 @@ cli_succeeded() {
 run_iteration() {
   local iteration=$1
   local start_time end_time result=1
+  local prompt
 
   start_time=$(date +%s)
   print_iteration_start "$iteration" "$(date +%H:%M:%S)"
 
   create_temp_files
-  execute_cli "$(build_prompt)"
+  prompt="$(build_prompt)"
+  execute_cli "$prompt"
 
   end_time=$(date +%s)
   print_iteration_end "$((end_time - start_time))"
