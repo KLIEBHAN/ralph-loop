@@ -253,8 +253,9 @@ build_prompt() {
   fi
 
   template=$(<"$template_file")
-  template=${template//\$PROMPT/$PROMPT}
+  # Order matters: replace $PROMISE first, so $PROMISE in user prompt won't be double-replaced
   template=${template//\$PROMISE/$PROMISE}
+  template=${template//\$PROMPT/$PROMPT}
   printf "\n\n%s\n" "$template"
 }
 

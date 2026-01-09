@@ -16,6 +16,8 @@ Viel Erfolg.
 
 Die Aufgabe: $PROMPT
 
-- Wenn du deinen kleinen Beitrag zur Aufgabe geliefert hast, gib aus: SUCCESS
-- Wenn du den letzten Teil der Aufgabe komplett erledigt hast, gib aus: <promise>$PROMISE</promise> - sehr unwahrscheinlich
-- Gib die Promise nicht aus, es sei denn du hast den letzten Teil der Aufgabe erledigt.
+Am Ende deiner Arbeit:
+- Hast du einen Beitrag geleistet, aber die Gesamtaufgabe ist noch nicht fertig? → Gib aus: SUCCESS
+- Hast du den LETZTEN Schritt erledigt und die Aufgabe ist KOMPLETT abgeschlossen? → Gib aus: <promise>$PROMISE</promise>
+
+Wichtig: Die Promise ist nur für den absolut letzten Schritt. Im Zweifel: SUCCESS.
