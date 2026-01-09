@@ -16,6 +16,6 @@ Viel Erfolg.
 
 Die Aufgabe: $PROMPT
 
-- Wenn du deinen kleinen Beitrag zur Aufgabe geliefert hast, gib aus: DONE
+- Wenn du deinen kleinen Beitrag zur Aufgabe geliefert hast, gib aus: SUCCESS
 - Wenn du den letzten Teil der Aufgabe komplett erledigt hast, gib aus: <promise>$PROMISE</promise> - sehr unwahrscheinlich
 - Gib die Promise nicht aus, es sei denn du hast den letzten Teil der Aufgabe erledigt.
