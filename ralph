@@ -243,6 +243,18 @@ prd_allows_completion() {
 # Wraps user prompt with loop instructions
 # Note: Iteration number omitted intentionally - prevents rushing behavior
 build_prompt() {
+  local script_dir template_file template
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  template_file="${script_dir}/prompt.md"
+
+  if [[ -f "$template_file" ]]; then
+    template=$(<"$template_file")
+    template=${template//\$PROMPT/$PROMPT}
+    template=${template//\$PROMISE/$PROMISE}
+    printf "\n\n%s\n" "$template"
+    return
+  fi
+
   cat <<EOF
 
 
