@@ -87,7 +87,7 @@ print_help() {
 Usage: ralph [OPTIONS] "Your prompt"
 
 Options:
-  --cli <claude|codex>    AI CLI to use (default: claude)
+  --cli <claude|codex|opencode>  AI CLI to use (default: claude)
   -n, --max-iterations N  Max iterations (default: 10)
   -p, --promise TEXT      Completion signal (default: COMPLETE)
   --prd <file>            PRD file to validate (rejects if "## Offen" not empty)
@@ -99,6 +99,9 @@ Examples:
 
   # With iteration limit
   ralph -n 20 "Implement feature X"
+
+  # Use a different CLI
+  ralph --cli opencode "Refactor the auth module"
 
   # PRD-based workflow (recommended for projects)
   ralph --prd plans/prd.md "Read plans/prd.md and work on the next feature"
@@ -175,8 +178,8 @@ validate_args() {
     exit 1
   fi
 
-  if [[ "$CLI" != "claude" && "$CLI" != "codex" ]]; then
-    print_error "--cli must be 'claude' or 'codex' (got: '$CLI')"
+  if [[ "$CLI" != "claude" && "$CLI" != "codex" && "$CLI" != "opencode" ]]; then
+    print_error "--cli must be 'claude', 'codex', or 'opencode' (got: '$CLI')"
     exit 1
   fi
 
@@ -202,9 +205,9 @@ check_dependencies() {
     exit 1
   fi
 
-  # Claude streams JSON that requires jq for parsing
-  if [[ "$CLI" == "claude" ]] && ! command -v jq &>/dev/null; then
-    print_error "jq required for Claude (brew install jq)"
+  # Claude and OpenCode stream JSON that requires jq for parsing
+  if [[ "$CLI" == "claude" || "$CLI" == "opencode" ]] && ! command -v jq &>/dev/null; then
+    print_error "jq required for $CLI (brew install jq)"
     exit 1
   fi
 }
@@ -308,13 +311,56 @@ execute_codex() {
   echo "${PIPESTATUS[0]}" > "$EXIT_CODE_FILE"
 }
 
+# Extracts and displays text from OpenCode's JSON stream
+parse_opencode_message() {
+  local line=$1
+  local msg_type
+  msg_type=$(echo "$line" | jq -r '.type // empty' 2>/dev/null)
+
+  case "$msg_type" in
+    text)
+      local text
+      text=$(echo "$line" | jq -r '.part.text // empty' 2>/dev/null)
+      if [[ -n "$text" ]]; then
+        printf "%s\n" "$text"
+        printf "%s\n" "$text" >> "$OUTPUT_FILE"
+      fi
+      ;;
+    tool_use)
+      local tool title
+      tool=$(echo "$line" | jq -r '.part.tool // empty' 2>/dev/null)
+      title=$(echo "$line" | jq -r '.part.state.title // empty' 2>/dev/null)
+      if [[ -n "$tool" ]]; then
+        if [[ -n "$title" ]]; then
+          echo -e "${BLUE}  ⚙️  ${tool}: ${title}${RESET}"
+        else
+          echo -e "${BLUE}  ⚙️  ${tool}${RESET}"
+        fi
+      fi
+      ;;
+  esac
+}
+
+execute_opencode() {
+  local prompt=$1
+  local model="${RALPH_OPENCODE_MODEL:-google/gemini-claude-opus-4-5-thinking}"
+  # Process substitution captures exit code separately from stream
+  while IFS= read -r line; do
+    parse_opencode_message "$line"
+  done < <(
+    # OPENCODE_PERMISSION allows all actions without user prompts (yolo mode)
+    OPENCODE_PERMISSION='{"*":"allow"}' opencode run "$prompt" --model "$model" --format json 2>&1
+    echo $? > "$EXIT_CODE_FILE"
+  )
+}
+
 execute_cli() {
   local prompt=$1
-  if [[ "$CLI" == "claude" ]]; then
-    execute_claude "$prompt"
-  else
-    execute_codex "$prompt"
-  fi
+  case "$CLI" in
+    claude)   execute_claude "$prompt" ;;
+    codex)    execute_codex "$prompt" ;;
+    opencode) execute_opencode "$prompt" ;;
+  esac
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════

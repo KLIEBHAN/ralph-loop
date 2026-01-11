@@ -17,6 +17,7 @@ Ralph is a simple bash loop that repeatedly runs an AI coding agent with the sam
 
 - [Claude Code](https://claude.com/code) (Anthropic)
 - [Codex CLI](https://github.com/openai/codex) (OpenAI)
+- [OpenCode](https://github.com/anomalyco/opencode) (Open Source)
 
 ## Installation
 
@@ -34,6 +35,13 @@ ln -s $(pwd)/ralph-loop/ralph ~/.local/bin/ralph
 
 - **Claude:** requires `jq` (`brew install jq`)
 - **Codex:** no additional dependencies
+- **OpenCode:** requires `jq` (`brew install jq`)
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RALPH_OPENCODE_MODEL` | Model for OpenCode CLI | `google/gemini-claude-opus-4-5-thinking` |
 
 ## Usage
 
@@ -45,7 +53,7 @@ ralph [OPTIONS] "Your prompt here"
 
 | Option                  | Short | Description                                             | Default    |
 | ----------------------- | ----- | ------------------------------------------------------- | ---------- |
-| `--cli <claude\|codex>` |       | AI CLI to use                                           | `claude`   |
+| `--cli <claude\|codex\|opencode>` |       | AI CLI to use                                           | `claude`   |
 | `--max-iterations`      | `-n`  | Max iterations before stopping                          | `10`       |
 | `--promise`             | `-p`  | Completion promise text                                 | `COMPLETE` |
 | `--prd <file>`          |       | PRD file to validate (rejects completion if items open) |            |
@@ -59,6 +67,9 @@ ralph "Build a REST API for todos"
 
 # Use Codex instead
 ralph --cli codex "Fix the authentication bug"
+
+# Use OpenCode
+ralph --cli opencode "Refactor the database layer"
 
 # Custom iteration limit and promise
 ralph -n 20 -p "ALL TESTS PASSING" "Implement user registration with tests"

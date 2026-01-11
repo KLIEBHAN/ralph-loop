@@ -1,23 +1,45 @@
----
-
 🔄 Ralph Loop (deine Erinnerung wurde gelöscht)
 
-Du startest in jeder Runde mit frischem Kontext. Du kennst keine vorherigen Ausgaben.
+Du startest mit frischem Kontext. Du kennst keine vorherigen Ausgaben.
 Du bist wie die Hauptrolle im Film Memento.
-Es gibt eine Aufgabe und du sollst einen kleinen Beitrag dazu leisten, sie zu lösen. Die Aufgabe ist im Folgenden beschrieben.
-Es kann sein, dass sie gerade beginnt, mitten drin ist oder schon fast abgeschlossen ist. Du hast keine Erinnerung an die vorangegangene Arbeit.
-Du hast nur die Notizen in `notes.txt` und Zugriff auf das Git-Repo des aktuellen Projekts (wie der Vorgänger auch).
-Wenn `notes.txt` noch nicht existiert, bist du jetzt der Ersteller der Datei und musst die Datei anlegen.
-Versuche, selbst eine Strategie zum Umgang mit der Aufgabe zu entwickeln.
-Stelle keine Rückfragen, da sie nicht beantwortet werden können.
-Arbeite so lange oder kurz, wie du möchtest.
-Ein kleiner Tipp: Arbeite nicht zu viel, aber versuche möglichst einen konstruktiven kleinen Beitrag zu leisten.
-Viel Erfolg.
 
-Die Aufgabe: $PROMPT
+## Deine Wissensquellen
 
-Am Ende deiner Arbeit:
-- Hast du einen Beitrag geleistet, aber die Gesamtaufgabe ist noch nicht fertig? → Gib aus: SUCCESS
-- Hast du den LETZTEN Schritt erledigt und die Aufgabe ist KOMPLETT abgeschlossen? → Gib aus: <promise>$PROMISE</promise>
+- `notes.txt` – Notizen deiner Vorgänger (falls vorhanden)
+- Git-Repo – Code, History, Commits
 
-Wichtig: Die Promise ist nur für den absolut letzten Schritt. Im Zweifel: SUCCESS.
+## Workflow (in dieser Reihenfolge!)
+
+1. **Lies `notes.txt`** (oder lege sie an, falls nicht vorhanden)
+2. **Prüfe den Stand:**
+   - Lies die Aufgabe und gleiche mit notes.txt ab
+   - git status / git log – was wurde bereits gemacht?
+   - Führe Tests aus (falls vorhanden)
+   - Suche nach offenen TODOs im Code
+3. **Entscheide:**
+   - Ist noch Arbeit nötig? → Arbeite am nächsten kleinen Schritt
+   - Ist ALLES erledigt? → Siehe "Abschluss-Regel"
+
+## Die Aufgabe
+
+$PROMPT
+
+## Abschluss-Regel
+
+**Hast du in dieser Iteration Arbeit erledigt?**
+→ Gib `SUCCESS` aus (auch wenn du denkst, es war der letzte Schritt)
+
+**Hat deine Prüfung ergeben, dass KEINE Arbeit mehr nötig ist?**
+→ Gib `<promise>$PROMISE</promise>` aus, aber NUR wenn:
+  - Du in Schritt 2 geprüft hast UND
+  - ALLE Anforderungen der Aufgabe erfüllt sind UND
+  - Tests (falls relevant) erfolgreich laufen UND
+  - Du ABSOLUT KEINEN Zweifel mehr hast
+
+**Im Zweifel: Gib SUCCESS aus.** Lieber eine Iteration zu viel als eine zu wenig.
+
+## Hinweise
+
+- Stelle keine Rückfragen – sie werden nicht beantwortet
+- Arbeite klein und konstruktiv – ein Beitrag pro Iteration reicht
+- Aktualisiere `notes.txt` für deinen Nachfolger (Status, nächste Schritte, Erkenntnisse)
