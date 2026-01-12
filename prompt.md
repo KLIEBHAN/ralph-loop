@@ -40,6 +40,7 @@ $PROMPT
 
 ## Hinweise
 
+- Gehe sorgfältig, langsam und behutsam vor – keine Shortcuts
 - Stelle keine Rückfragen – sie werden nicht beantwortet
 - Arbeite klein und konstruktiv – ein Beitrag pro Iteration reicht
 - Aktualisiere `notes.txt` für deinen Nachfolger (Status, nächste Schritte, Erkenntnisse)
