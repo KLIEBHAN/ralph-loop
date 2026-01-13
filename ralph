@@ -50,7 +50,7 @@ cleanup_temp_files() {
 }
 
 # Ensure cleanup on any exit (normal, error, or Ctrl+C)
-trap cleanup_temp_files EXIT INT TERM
+trap 'cleanup_temp_files; exit 130' EXIT INT TERM
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FORMATTING HELPERS
